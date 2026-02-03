@@ -16,6 +16,7 @@ credits = credits.rename(columns={"movie_id": "id"})
 movies = movies.merge(credits, on="id")
 
 # 3) Drop unneeded columns
+print("Columns before dropping:", movies.columns)
 movies = movies.drop(columns=[
     "homepage",
     "status",
