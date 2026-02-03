@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import requests
+import sklearn
+import time
 
 
 # 1) Load Data
@@ -89,25 +91,31 @@ if user_movie:
         st.warning(results)
     else:
         st.subheader(f"Recommendations similar to '{user_movie}':")
-        TMDB_API_KEY = "YOUR_TMDB_API_KEY"  # <-- Replace with your actual TMDB API key
-        def fetch_poster_url(title):
-            """Fetch poster URL from TMDB API given a movie title."""
+        TMDB_API_KEY = "9b73be72146c5eceaf19cb20456a43a9"  # <-- Updated with your actual TMDB API key
+        def fetch_poster_url(title, retries=3, delay=1):
+            """Fetch poster URL from TMDB API given a movie title, with retry logic."""
             url = f"https://api.themoviedb.org/3/search/movie"
             params = {
                 "api_key": TMDB_API_KEY,
                 "query": title
             }
-            try:
-                response = requests.get(url, params=params, timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    results = data.get("results")
-                    if results:
-                        poster_path = results[0].get("poster_path")
-                        if poster_path:
-                            return f"https://image.tmdb.org/t/p/w500{poster_path}"
-            except requests.exceptions.RequestException as e:
-                print(f"Error fetching poster for '{title}': {e}")
+            for attempt in range(retries):
+                try:
+                    response = requests.get(url, params=params, timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        results = data.get("results")
+                        if results:
+                            poster_path = results[0].get("poster_path")
+                            if poster_path:
+                                return f"https://image.tmdb.org/t/p/w500{poster_path}"
+                    else:
+                        print(f"TMDB API error: {response.status_code}")
+                except requests.exceptions.ConnectionError as e:
+                    print(f"Connection error fetching poster for '{title}': {e}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching poster for '{title}': {e}")
+                time.sleep(delay)  # Wait before retrying
             return None
         pass
         for r in results:
